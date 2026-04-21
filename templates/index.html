@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Minimal AI Assistant</title>
+    <title>Nero Assistant</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -15,19 +15,26 @@
   <body>
     <main class="page">
       <section class="hero">
-        <h1 class="title">AI Assistant</h1>
+        <h1 class="title">Nero</h1>
         <p class="subtitle">
-          Minimalist draggable chat window (MN / EN).
+          Nero бол Монгол/English хэл дэмждэг minimalist AI Assistant.
+          Зорилго нь энгийн: хүнтэй байгалийн яриа шиг ойлголцож, асуултад хурдан бөгөөд цэгцтэй хариулах.
         </p>
         <div class="hint">
-          <span class="kbd">Bottom-right</span> дээрх товч дээр дарж чат нээнэ.
+          <span class="kbd">Эхлэх</span> Баруун доод булан дахь <span class="kbd">N</span> товчийг дарж чат нээнэ.
+          Дотор нь <span class="kbd">MN/EN</span> сонгож хэлээ солиод бичээд илгээнэ.
+        </div>
+        <div class="hint" style="margin-top:12px;">
+          <span class="kbd">Tech</span>
+          Frontend: HTML/CSS/JS (draggable popup, typing animation, Markdown). Backend: Python Flask (`/api/chat`).
+          AI: Gemini API (`GEMINI_API_KEY`) — key байхгүй үед Lite fallback ажиллана.
         </div>
       </section>
     </main>
 
     <!-- Floating launcher -->
     <button id="chat-launcher" class="chat-launcher" type="button" aria-label="Open chat">
-      AI
+      N
     </button>
 
     <!-- Chat window -->
@@ -36,7 +43,7 @@
         <div class="chat-title">
           <div class="dot"></div>
           <div>
-            <div class="chat-name">AI Assistant</div>
+            <div class="chat-name">Nero</div>
             <div class="chat-status" id="chat-status">Ready</div>
           </div>
         </div>
@@ -68,6 +75,9 @@
       </form>
     </section>
 
+    <!-- Markdown rendering (safe) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
     <script src="/static/app.js"></script>
   </body>
 </html>

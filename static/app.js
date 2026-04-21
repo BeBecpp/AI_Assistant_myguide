@@ -13,11 +13,31 @@ let minimized = false;
 let isDragging = false;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
+let activePointerId = null;
 
 const state = {
   lang: "mn",
   messages: [],
 };
+
+let thinkingEl = null;
+
+function renderMarkdown(text) {
+  const raw = String(text ?? "");
+  if (window.marked && window.DOMPurify) {
+    const html = window.marked.parse(raw, {
+      gfm: true,
+      breaks: true,
+      headerIds: false,
+      mangle: false,
+    });
+    return window.DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+  }
+  // Fallback (should rarely happen): escape
+  const div = document.createElement("div");
+  div.textContent = raw;
+  return div.innerHTML;
+}
 
 function setStatus(text) {
   statusEl.textContent = text;
@@ -31,9 +51,28 @@ function addMessage(role, content) {
   state.messages.push({ role, content });
   const div = document.createElement("div");
   div.className = `msg ${role}`;
-  div.textContent = content;
+  div.innerHTML = renderMarkdown(content);
   messagesEl.appendChild(div);
   scrollToBottom();
+}
+
+function showThinking() {
+  if (thinkingEl) return;
+  thinkingEl = document.createElement("div");
+  thinkingEl.className = "msg assistant thinking";
+  thinkingEl.setAttribute("aria-label", "Thinking");
+  const typing = document.createElement("div");
+  typing.className = "typing";
+  typing.innerHTML = "<span></span><span></span><span></span>";
+  thinkingEl.appendChild(typing);
+  messagesEl.appendChild(thinkingEl);
+  scrollToBottom();
+}
+
+function hideThinking() {
+  if (!thinkingEl) return;
+  thinkingEl.remove();
+  thinkingEl = null;
 }
 
 function addMeta(content) {
@@ -55,10 +94,9 @@ function openChat() {
   if (state.messages.length === 0) {
     const greet =
       state.lang === "en"
-        ? "Hi! I’m your AI Assistant. Ask me anything."
-        : "Сайн байна уу! Би таны AI Assistant. Юу асуух вэ?";
+        ? "Hi! I’m Nero. Ask me anything."
+        : "Сайн байна уу! Би Nero. Юу асуух вэ?";
     addMessage("assistant", greet);
-    addMeta(state.lang === "en" ? "Tip: drag the header to move." : "Зөвлөгөө: header-ийг чирээд байрлалаа өөрчилж болно.");
   }
 }
 
@@ -81,6 +119,7 @@ function toggleMinimize() {
 
 async function sendToServer(userText) {
   setStatus(state.lang === "en" ? "Thinking…" : "Бодож байна…");
+  showThinking();
   const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -109,24 +148,23 @@ langEl.addEventListener("change", () => {
 });
 
 // Drag behavior
-header.addEventListener("mousedown", (e) => {
-  if (!win.classList.contains("open")) return;
+function startDrag(clientX, clientY) {
   isDragging = true;
   const rect = win.getBoundingClientRect();
-  dragOffsetX = e.clientX - rect.left;
-  dragOffsetY = e.clientY - rect.top;
+  dragOffsetX = clientX - rect.left;
+  dragOffsetY = clientY - rect.top;
 
   // Convert from bottom/right anchored to top/left anchored on first drag
   win.style.right = "auto";
   win.style.bottom = "auto";
   win.style.left = `${rect.left}px`;
   win.style.top = `${rect.top}px`;
-});
+}
 
-document.addEventListener("mousemove", (e) => {
+function moveDrag(clientX, clientY) {
   if (!isDragging) return;
-  const newLeft = e.clientX - dragOffsetX;
-  const newTop = e.clientY - dragOffsetY;
+  const newLeft = clientX - dragOffsetX;
+  const newTop = clientY - dragOffsetY;
 
   const margin = 8;
   const maxLeft = window.innerWidth - win.offsetWidth - margin;
@@ -134,10 +172,35 @@ document.addEventListener("mousemove", (e) => {
 
   win.style.left = `${Math.min(Math.max(newLeft, margin), maxLeft)}px`;
   win.style.top = `${Math.min(Math.max(newTop, margin), maxTop)}px`;
+}
+
+function endDrag() {
+  isDragging = false;
+  activePointerId = null;
+}
+
+// Pointer events (works for mouse + touch)
+header.addEventListener("pointerdown", (e) => {
+  if (!win.classList.contains("open")) return;
+  if (activePointerId !== null) return;
+  activePointerId = e.pointerId;
+  header.setPointerCapture(e.pointerId);
+  startDrag(e.clientX, e.clientY);
 });
 
-document.addEventListener("mouseup", () => {
-  isDragging = false;
+header.addEventListener("pointermove", (e) => {
+  if (!isDragging || e.pointerId !== activePointerId) return;
+  moveDrag(e.clientX, e.clientY);
+});
+
+header.addEventListener("pointerup", (e) => {
+  if (e.pointerId !== activePointerId) return;
+  endDrag();
+});
+
+header.addEventListener("pointercancel", (e) => {
+  if (e.pointerId !== activePointerId) return;
+  endDrag();
 });
 
 // Submit
@@ -150,9 +213,11 @@ form.addEventListener("submit", async (e) => {
   addMessage("user", text);
   try {
     const reply = await sendToServer(text);
+    hideThinking();
     addMessage("assistant", reply);
     setStatus("Ready");
   } catch (err) {
+    hideThinking();
     addMessage(
       "assistant",
       state.lang === "en"
