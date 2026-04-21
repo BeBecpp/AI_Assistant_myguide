@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Minimal AI Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <h1 class="title">AI Assistant</h1>
+        <p class="subtitle">
+          Minimalist draggable chat window (MN / EN).
+        </p>
+        <div class="hint">
+          <span class="kbd">Bottom-right</span> дээрх товч дээр дарж чат нээнэ.
+        </div>
+      </section>
+    </main>
+
+    <!-- Floating launcher -->
+    <button id="chat-launcher" class="chat-launcher" type="button" aria-label="Open chat">
+      AI
+    </button>
+
+    <!-- Chat window -->
+    <section id="chat-window" class="chat-window" aria-hidden="true">
+      <header id="chat-header" class="chat-header" title="Drag me">
+        <div class="chat-title">
+          <div class="dot"></div>
+          <div>
+            <div class="chat-name">AI Assistant</div>
+            <div class="chat-status" id="chat-status">Ready</div>
+          </div>
+        </div>
+        <div class="chat-actions">
+          <select id="lang" class="chat-lang" aria-label="Language">
+            <option value="mn" selected>MN</option>
+            <option value="en">EN</option>
+          </select>
+          <button id="chat-min" class="icon-btn" type="button" aria-label="Minimize">
+            —
+          </button>
+          <button id="chat-close" class="icon-btn" type="button" aria-label="Close">
+            ×
+          </button>
+        </div>
+      </header>
+
+      <div id="chat-messages" class="chat-messages" role="log" aria-live="polite"></div>
+
+      <form id="chat-form" class="chat-form" autocomplete="off">
+        <input
+          id="chat-input"
+          class="chat-input"
+          type="text"
+          placeholder="Message…"
+          maxlength="4000"
+        />
+        <button id="chat-send" class="chat-send" type="submit">Send</button>
+      </form>
+    </section>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
+
